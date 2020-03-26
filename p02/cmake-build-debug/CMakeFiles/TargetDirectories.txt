@@ -1,0 +1,3 @@
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/cmake-build-debug/CMakeFiles/p02.dir
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/cmake-build-debug/CMakeFiles/edit_cache.dir

@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/datatypes.h
+ucontext.h
+-
+stdio.h
+-
+stdlib.h
+-
+
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/pingpong-tasks3.c
+stdio.h
+-
+stdlib.h
+-
+pingpong.h
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/pingpong.h
+
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/pingpong.h
+datatypes.h
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/SO/frizzo/p02/datatypes.h
+

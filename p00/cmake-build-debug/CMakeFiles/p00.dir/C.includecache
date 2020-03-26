@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/p00/queue.c
+queue.h
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/p00/queue.h
+stdlib.h
+-
+stdio.h
+-
+
+/home/frizzo/Documents/UTFPR/SistemasOperacionais/p00/queue.h
+
