@@ -6,7 +6,10 @@ set(CMAKE_C_STANDARD 11)
 include_directories(.)
 
 add_executable(frizzOS
-        contexts.c
         datatypes.h
         pingpong.c
-        pingpong.h)
+        pingpong.h
+        queue.c
+        queue.h
+        pingpong-dispatcher.c
+        )

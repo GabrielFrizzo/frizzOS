@@ -10,8 +10,11 @@
 #include <ucontext.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "queue.h"
 
 #define STACKSIZE 32768		/* tamanho de pilha das threads */
+
+enum status_t { READY, SUSPENDED, TERMINATED };
 
 // Estrutura que define uma tarefa
 typedef struct task_t
@@ -19,6 +22,9 @@ typedef struct task_t
     struct task_t *prev, *next;
     int tid;
     ucontext_t context;
+    void *stack;
+    struct task_t *parent;
+    enum status_t status;
 } task_t ;
 
 // estrutura que define um semáforo
