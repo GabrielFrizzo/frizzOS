@@ -11,5 +11,5 @@ add_executable(frizzOS
         pingpong.h
         queue.c
         queue.h
-        pingpong-dispatcher.c
+        pingpong-scheduler.c
         )

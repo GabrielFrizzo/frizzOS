@@ -25,6 +25,8 @@ typedef struct task_t
     void *stack;
     struct task_t *parent;
     enum status_t status;
+    int ePrio;
+    int dPrio;
 } task_t ;
 
 // estrutura que define um semáforo

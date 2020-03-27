@@ -5,6 +5,8 @@
 
 #include "pingpong.h"
 
+#define DEFAULT_PRIO 0
+
 // variáveis globais
 int lastTaskID ;
 task_t mainTask, *currTask, dispatcher;
@@ -27,8 +29,30 @@ void _create_context(ucontext_t* context) {
     }
 }
 
+// scheduler algorithms
+task_t* _fcfs(task_t *taskQueue) {
+    return taskQueue;
+}
+
+task_t* _aging_prio(task_t *taskQueue) {
+    int lowPrio = 21;
+    task_t *first, *aux, *bestTask;
+    first = aux = bestTask = taskQueue;
+    do {
+        if (aux->dPrio < lowPrio) {
+            lowPrio = aux->dPrio;
+            bestTask = aux;
+        }
+        aux->dPrio--; // max de 20?
+        aux = aux->next;
+    } while(aux != first);
+
+    bestTask->dPrio = bestTask->ePrio;
+    return bestTask;
+}
+
 task_t* _scheduler() {
-    return readyTasks;  // FCFS
+    return _aging_prio(readyTasks);
 }
 
 void _append_ready_task(task_t* task) {
@@ -94,11 +118,12 @@ int task_create(task_t *task, void (*start_func)(void*), void *arg) {
 
     _append_ready_task(task);
 
+    task->tid = lastTaskID++;
     task->context = newContext;
     task->stack = newContext.uc_stack.ss_sp;
-    task->tid = lastTaskID++;
-    task->status = READY;
     task->parent = &dispatcher;
+    task->status = READY;
+    task->ePrio = task->dPrio = DEFAULT_PRIO;
     return task->tid;
 }
 
@@ -139,5 +164,16 @@ void task_resume(task_t *task) {
     queue_remove((queue_t **) &suspendedTasks, (queue_t *) task);
     queue_append((queue_t **) &readyTasks, (queue_t *) task);
     task->status = READY;
+}
+
+void task_setprio(task_t *task, int prio) {
+    if (prio > 20) { prio = 20; }
+    if (prio < -20) { prio = -20; }
+    task_t *toset = task == NULL ? currTask : task;
+    toset->dPrio = toset->ePrio = prio;
+}
+
+int task_getprio(task_t *task) {
+    return task == NULL ? currTask->ePrio : task->ePrio;
 }
 
