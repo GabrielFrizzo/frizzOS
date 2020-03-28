@@ -6,11 +6,14 @@
 #include "pingpong.h"
 
 #define DEFAULT_PRIO 0
+#define DEFAULT_TICKS 20
 
 // variáveis globais
 int lastTaskID ;
 task_t mainTask, *currTask, dispatcher;
 task_t *readyTasks, *suspendedTasks;
+struct sigaction action;
+struct itimerval timer;
 
 void _create_context(ucontext_t* context) {
     getcontext(context);
@@ -62,6 +65,41 @@ void _append_ready_task(task_t* task) {
 #endif
 }
 
+void _handle_tick() {
+#ifdef DEBUG
+    printf("Handle tick\ttid: %d\tticks left: %d\n", currTask->tid, currTask->ticksLeft);
+#endif
+    if (!currTask->isUserTask) return;
+
+    if (--currTask->ticksLeft <= 0) {
+        task_yield();
+    }
+}
+
+void _start_timer() {
+    action.sa_handler = _handle_tick;
+    sigemptyset (&action.sa_mask) ;
+    action.sa_flags = 0 ;
+    if (sigaction (SIGALRM, &action, 0) < 0)
+    {
+        perror ("Erro em sigaction: ") ;
+        exit (1) ;
+    }
+
+    // ajusta valores do temporizador
+    timer.it_value.tv_usec = 1000 ;      // primeiro disparo, em micro-segundos
+    timer.it_value.tv_sec  = 0 ;      // primeiro disparo, em segundos
+    timer.it_interval.tv_usec = 1000 ;   // disparos subsequentes, em micro-segundos
+    timer.it_interval.tv_sec  = 0 ;   // disparos subsequentes, em segundos
+
+    // arma o temporizador ITIMER_REAL (vide man setitimer)
+    if (setitimer (ITIMER_REAL, &timer, 0) < 0)
+    {
+        perror ("Erro em setitimer: ") ;
+        exit (1) ;
+    }
+}
+
 void _dispatcher_exec(void *arg) {
     while (queue_size((queue_t*)readyTasks) > 0) {
         task_t *nextTask = _scheduler();
@@ -107,7 +145,9 @@ void pingpong_init() {
 
     task_create(&dispatcher, &_dispatcher_exec, NULL);
     dispatcher.parent = &mainTask;
+    dispatcher.isUserTask = 0;
     queue_remove((queue_t **) &readyTasks, (queue_t *) &dispatcher);
+    _start_timer();
 }
 
 int task_create(task_t *task, void (*start_func)(void*), void *arg) {
@@ -124,6 +164,7 @@ int task_create(task_t *task, void (*start_func)(void*), void *arg) {
     task->parent = &dispatcher;
     task->status = READY;
     task->ePrio = task->dPrio = DEFAULT_PRIO;
+    task->isUserTask = 1;
     return task->tid;
 }
 
@@ -133,6 +174,7 @@ int task_switch(task_t *task) {
     #endif //DEBUG print
     task_t *prevTask = currTask;
     currTask = task;
+    currTask->ticksLeft = DEFAULT_TICKS;
     if (swapcontext(&prevTask->context, &task->context) != 0) {
         perror("Erro na troca de contextos");
     }
