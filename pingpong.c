@@ -56,7 +56,7 @@ task_t* _aging_prio(task_t *taskQueue) {
 }
 
 task_t* _scheduler() {
-    return _fcfs(readyTasks);
+    return _aging_prio(readyTasks);
 }
 
 void _append_ready_task(task_t* task) {
@@ -142,15 +142,28 @@ void pingpong_init() {
     setvbuf(stdout, 0, _IONBF, 0);
 
     lastTaskID = 0;
-    mainTask.tid = lastTaskID++;
 
+    // main init
+    mainTask.tid = lastTaskID++;
+    mainTask.parent = &dispatcher;
+    mainTask.isUserTask = 1;
+    mainTask.status = READY;
+    mainTask.ePrio = mainTask.dPrio = DEFAULT_PRIO; // perguntar se deve ser default
+    mainTask.perf.gStartTime = mainTask.perf.lStartTime = systime();
+    mainTask.perf.activations = mainTask.perf.totalPTime = 0;
+    _append_ready_task(&mainTask);
     currTask = &mainTask;
 
+
+    // init dispatcher
     task_create(&dispatcher, &_dispatcher_exec, NULL);
     dispatcher.parent = &mainTask;
     dispatcher.isUserTask = 0;
     queue_remove((queue_t **) &readyTasks, (queue_t *) &dispatcher);
+
     _start_timer();
+
+    task_yield();
 }
 
 int task_create(task_t *task, void (*start_func)(void*), void *arg) {
