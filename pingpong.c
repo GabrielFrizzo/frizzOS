@@ -14,6 +14,7 @@ task_t mainTask, *currTask, dispatcher;
 task_t *readyTasks, *suspendedTasks;
 struct sigaction action;
 struct itimerval timer;
+unsigned int msec;
 
 void _create_context(ucontext_t* context) {
     getcontext(context);
@@ -55,7 +56,7 @@ task_t* _aging_prio(task_t *taskQueue) {
 }
 
 task_t* _scheduler() {
-    return _aging_prio(readyTasks);
+    return _fcfs(readyTasks);
 }
 
 void _append_ready_task(task_t* task) {
@@ -66,6 +67,7 @@ void _append_ready_task(task_t* task) {
 }
 
 void _handle_tick() {
+    msec++;
 #ifdef DEBUG
     printf("Handle tick\ttid: %d\tticks left: %d\n", currTask->tid, currTask->ticksLeft);
 #endif
@@ -98,6 +100,7 @@ void _start_timer() {
         perror ("Erro em setitimer: ") ;
         exit (1) ;
     }
+    msec = 0;
 }
 
 void _dispatcher_exec(void *arg) {
@@ -165,6 +168,8 @@ int task_create(task_t *task, void (*start_func)(void*), void *arg) {
     task->status = READY;
     task->ePrio = task->dPrio = DEFAULT_PRIO;
     task->isUserTask = 1;
+    task->perf.gStartTime = task->perf.lStartTime = systime();
+    task->perf.activations = task->perf.totalPTime = 0;
     return task->tid;
 }
 
@@ -174,6 +179,10 @@ int task_switch(task_t *task) {
     #endif //DEBUG print
     task_t *prevTask = currTask;
     currTask = task;
+
+    prevTask->perf.totalPTime += systime() - prevTask->perf.lStartTime;
+    currTask->perf.activations++;
+    currTask->perf.lStartTime = systime();
     currTask->ticksLeft = DEFAULT_TICKS;
     if (swapcontext(&prevTask->context, &task->context) != 0) {
         perror("Erro na troca de contextos");
@@ -182,6 +191,13 @@ int task_switch(task_t *task) {
 }
 
 void task_exit(int exitCode) {
+    printf("Task %d exit: execution time %u ms, processor time %u ms, %d activations\n",
+            currTask->tid,
+            systime() - currTask->perf.gStartTime,
+            currTask->perf.totalPTime,
+            currTask->perf.activations
+            );
+
     currTask->status = TERMINATED;
     task_switch(currTask->parent);
 }
@@ -217,5 +233,9 @@ void task_setprio(task_t *task, int prio) {
 
 int task_getprio(task_t *task) {
     return task == NULL ? currTask->ePrio : task->ePrio;
+}
+
+unsigned int systime() {
+    return msec;
 }
 

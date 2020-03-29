@@ -18,6 +18,14 @@
 
 enum status_t { READY, SUSPENDED, TERMINATED };
 
+// Estrutura que define informacoes de uso do processador de tarefas
+typedef struct performance
+{
+    unsigned int activations;
+    unsigned int gStartTime, lStartTime; // global and local start time
+    unsigned int totalPTime; //Total processor time
+} performance;
+
 // Estrutura que define uma tarefa
 typedef struct task_t
 {
@@ -31,6 +39,7 @@ typedef struct task_t
     int dPrio;
     int ticksLeft;
     int isUserTask; //bool
+    performance perf;
 } task_t ;
 
 // estrutura que define um semáforo
