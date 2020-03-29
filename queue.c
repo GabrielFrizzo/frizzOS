@@ -40,6 +40,9 @@ queue_t *queue_remove(queue_t **queue, queue_t *elem) {
     //    if(elem->next != NULL) return NULL;
 
     queue_t* first = *queue, *prev = first;
+    if (first == NULL) {
+        _error("tentou remover de fila vazia");return NULL;
+    }
 
     if (elem == first) {
         if(elem == first->next) {

@@ -40,6 +40,8 @@ typedef struct task_t
     int ticksLeft;
     int isUserTask; //bool
     performance perf;
+    struct task_t *joined;
+    int exitCode;
 } task_t ;
 
 // estrutura que define um semáforo

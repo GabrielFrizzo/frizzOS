@@ -107,7 +107,22 @@ void _dispatcher_exec(void *arg) {
     while (queue_size((queue_t*)readyTasks) > 0) {
         task_t *nextTask = _scheduler();
         if (nextTask != NULL) {
+            // pre process task
+            switch (nextTask->status) {
+                case SUSPENDED:
+                    task_suspend(nextTask, &suspendedTasks);
+                    break;
+                case TERMINATED:
+                    queue_remove((queue_t **) &readyTasks, (queue_t *) nextTask);
+                    free(nextTask->stack);
+                    break;
+                default:
+                    break;
+            }
+
             task_switch(nextTask);
+
+            // post process task
             switch (nextTask->status) {
                 case READY:
                     queue_remove((queue_t **) &readyTasks, (queue_t *) nextTask);
@@ -203,6 +218,20 @@ int task_switch(task_t *task) {
     return 0;
 }
 
+void _activate_joined_tasks(task_t *pTask) {
+    if (suspendedTasks == NULL) return; // empty suspended list
+
+    task_t *iter = suspendedTasks;
+    task_t* toSuspend[1000]; // to avoid removing while iterating
+    int cntToSuspend = 0;
+    do {
+        if (iter->joined == pTask) toSuspend[cntToSuspend++] = iter;
+        iter = iter->next;
+    } while(iter != suspendedTasks);
+
+    for(int i = 0; i < cntToSuspend; i++) task_resume(toSuspend[i]);
+}
+
 void task_exit(int exitCode) {
     printf("Task %d exit: execution time %u ms, processor time %u ms, %d activations\n",
             currTask->tid,
@@ -212,6 +241,9 @@ void task_exit(int exitCode) {
             );
 
     currTask->status = TERMINATED;
+    currTask->exitCode = exitCode;
+
+    _activate_joined_tasks(currTask);
     task_switch(currTask->parent);
 }
 
@@ -227,7 +259,7 @@ void task_suspend(task_t *task, task_t **queue) {
     if (queue == NULL) { return; }
     if (task == NULL) { task=currTask; }
     queue_remove((queue_t **) &readyTasks, (queue_t *) task);
-    queue_append((queue_t **) &suspendedTasks, (queue_t *) task);
+    queue_append((queue_t **) queue, (queue_t *) task);
     task->status = SUSPENDED;
 }
 
@@ -235,6 +267,9 @@ void task_resume(task_t *task) {
     queue_remove((queue_t **) &suspendedTasks, (queue_t *) task);
     queue_append((queue_t **) &readyTasks, (queue_t *) task);
     task->status = READY;
+#ifdef DEBUG
+    printf("D: resumed task %d\n", task->tid);
+#endif
 }
 
 void task_setprio(task_t *task, int prio) {
@@ -250,5 +285,19 @@ int task_getprio(task_t *task) {
 
 unsigned int systime() {
     return msec;
+}
+
+int task_join(task_t *task) {
+    if (task == NULL || task->status == TERMINATED) return -1;
+#ifdef DEBUG
+    printf("D: task %d waiting for %d\n", currTask->tid, task->tid);
+#endif
+    currTask->joined = task;
+    task_suspend(currTask, &suspendedTasks);
+    task_yield();
+#ifdef DEBUG
+    printf("D: task %d no longer waiting for %d\n", currTask->tid, task->tid);
+#endif
+    return task->exitCode;
 }
 
