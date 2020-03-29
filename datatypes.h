@@ -16,7 +16,7 @@
 
 #define STACKSIZE 32768		/* tamanho de pilha das threads */
 
-enum status_t { READY, SUSPENDED, TERMINATED };
+enum status_t { READY, SUSPENDED, TERMINATED, SLEEPING };
 
 // Estrutura que define informacoes de uso do processador de tarefas
 typedef struct performance
@@ -42,6 +42,7 @@ typedef struct task_t
     performance perf;
     struct task_t *joined;
     int exitCode;
+    unsigned int wakingTime;
 } task_t ;
 
 // estrutura que define um semáforo

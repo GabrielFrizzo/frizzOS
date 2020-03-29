@@ -7,11 +7,12 @@
 
 #define DEFAULT_PRIO 0
 #define DEFAULT_TICKS 20
+#define WAKE_PERIOD 250 // time to check sleeping tasks (in ms)
 
 // variáveis globais
 int lastTaskID ;
 task_t mainTask, *currTask, dispatcher;
-task_t *readyTasks, *suspendedTasks;
+task_t *readyTasks, *suspendedTasks, *sleepingTasks;
 struct sigaction action;
 struct itimerval timer;
 unsigned int msec;
@@ -39,6 +40,7 @@ task_t* _fcfs(task_t *taskQueue) {
 }
 
 task_t* _aging_prio(task_t *taskQueue) {
+    if (taskQueue == NULL) return NULL;
     int lowPrio = 21;
     task_t *first, *aux, *bestTask;
     first = aux = bestTask = taskQueue;
@@ -103,8 +105,24 @@ void _start_timer() {
     msec = 0;
 }
 
+void _wake_tasks() {
+    if (sleepingTasks == NULL) return; // empty suspended list
+
+    task_t *iter = sleepingTasks;
+    task_t* toWake[1000]; // to avoid removing while iterating
+    int cntToWake = 0;
+    do {
+        if (systime() >= iter->wakingTime) toWake[cntToWake++] = iter;
+        iter = iter->next;
+    } while(iter != sleepingTasks);
+
+    for(int i = 0; i < cntToWake; i++) task_resume(toWake[i]);
+}
+
 void _dispatcher_exec(void *arg) {
-    while (queue_size((queue_t*)readyTasks) > 0) {
+    while (queue_size((queue_t*)readyTasks) > 0 || queue_size((queue_t*)sleepingTasks) > 0) {
+        if (systime() % WAKE_PERIOD == 0) _wake_tasks();
+
         task_t *nextTask = _scheduler();
         if (nextTask != NULL) {
             // pre process task
@@ -264,7 +282,11 @@ void task_suspend(task_t *task, task_t **queue) {
 }
 
 void task_resume(task_t *task) {
-    queue_remove((queue_t **) &suspendedTasks, (queue_t *) task);
+    if (task->status == SLEEPING) {
+        queue_remove((queue_t **) &sleepingTasks, (queue_t *) task);
+    }else {
+        queue_remove((queue_t **) &suspendedTasks, (queue_t *) task);
+    }
     queue_append((queue_t **) &readyTasks, (queue_t *) task);
     task->status = READY;
 #ifdef DEBUG
@@ -289,15 +311,23 @@ unsigned int systime() {
 
 int task_join(task_t *task) {
     if (task == NULL || task->status == TERMINATED) return -1;
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("D: task %d waiting for %d\n", currTask->tid, task->tid);
-#endif
+//#endif
     currTask->joined = task;
     task_suspend(currTask, &suspendedTasks);
     task_yield();
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("D: task %d no longer waiting for %d\n", currTask->tid, task->tid);
-#endif
+//#endif
     return task->exitCode;
+}
+
+void task_sleep(int t) {
+    queue_remove((queue_t **) &readyTasks, (queue_t *) currTask);
+    queue_append((queue_t **) &sleepingTasks, (queue_t *) currTask);
+    currTask->status = SLEEPING;
+    currTask->wakingTime = systime() + t*1000;
+    task_yield();
 }
 
