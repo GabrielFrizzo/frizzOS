@@ -57,7 +57,9 @@ queue_t *queue_remove(queue_t **queue, queue_t *elem) {
         prev = prev->next;
 
         // - o elemento deve pertencer a fila indicada
-        if (prev == first) {_error("o elemento deve pertencer a fila indicada");return NULL;}
+        if (prev == first) {
+            _error("o elemento deve pertencer a fila indicada");return NULL;
+        }
     }
 
     queue_t *next = elem->next;

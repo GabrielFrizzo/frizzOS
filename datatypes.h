@@ -43,12 +43,15 @@ typedef struct task_t
     struct task_t *joined;
     int exitCode;
     unsigned int wakingTime;
+    struct task_t **queue;
 } task_t ;
 
 // estrutura que define um semáforo
 typedef struct
 {
-  // preencher quando necessário
+    task_t *task_q; //task queue
+    int value;
+    int destroyed;
 } semaphore_t ;
 
 // estrutura que define um mutex
@@ -68,5 +71,14 @@ typedef struct
 {
   // preencher quando necessário
 } mqueue_t ;
+
+// variáveis globais
+int lastTaskID ;
+task_t mainTask, *currTask, dispatcher;
+task_t *readyTasks, *suspendedTasks, *sleepingTasks;
+struct sigaction action;
+struct itimerval timer;
+unsigned int msec;
+int lock;
 
 #endif
