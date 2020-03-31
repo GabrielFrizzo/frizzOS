@@ -179,6 +179,7 @@ void pingpong_init() {
     mainTask.ePrio = mainTask.dPrio = DEFAULT_PRIO; // perguntar se deve ser default
     mainTask.perf.gStartTime = mainTask.perf.lStartTime = systime();
     mainTask.perf.activations = mainTask.perf.totalPTime = 0;
+    mainTask.queue = &readyTasks;
     _append_ready_task(&mainTask);
     currTask = &mainTask;
 

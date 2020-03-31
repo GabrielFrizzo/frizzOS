@@ -58,12 +58,15 @@ typedef struct
 typedef struct
 {
   // preencher quando necessário
+  // NAO É NECESSÁRIO?
 } mutex_t ;
 
 // estrutura que define uma barreira
 typedef struct
 {
-  // preencher quando necessário
+  semaphore_t *sem;
+  task_t *task_q;
+  int count;
 } barrier_t ;
 
 // estrutura que define uma fila de mensagens
