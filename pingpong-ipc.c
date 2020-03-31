@@ -38,7 +38,6 @@ int sem_down (semaphore_t *s) {
 
 int sem_up (semaphore_t *s) {
     if (s == NULL || s->destroyed) return -1;
-    if (s->task_q == NULL) return 0;
 
     _enter_crit_sec();
     if (++s->value <= 0) {

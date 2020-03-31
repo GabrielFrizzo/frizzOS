@@ -12,5 +12,4 @@ add_executable(frizzOS
         queue.c
         queue.h
         pingpong-ipc.c
-        pingpong-semaphore.c
-        )
+        pingpong-prodcons.c)

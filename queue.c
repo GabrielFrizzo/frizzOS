@@ -15,7 +15,9 @@ void queue_append(queue_t **queue, queue_t *elem) {
     // - o elemento deve existir
     if(elem == NULL) {_error("O elemento deve existir"); return;}
     // - o elemento nao deve estar em outra fila
-    if(elem->next != NULL) {_error("O elemento nao deve estar em outra fila"); return;}
+    if(elem->next != NULL) {
+        _error("O elemento nao deve estar em outra fila"); return;
+    }
 
     if (*queue == NULL) {
         *queue = elem;
@@ -35,7 +37,9 @@ queue_t *queue_remove(queue_t **queue, queue_t *elem) {
     // - a fila deve existir
     if(queue == NULL) {_error("a fila deve existir");return NULL;}
     // - o elemento deve existir
-    if(elem == NULL) {_error("o elemento deve existir");return NULL;}
+    if(elem == NULL) {
+        _error("o elemento deve existir");return NULL;
+    }
     // - o elemento nao deve estar em outra fila
     //    if(elem->next != NULL) return NULL;
 
