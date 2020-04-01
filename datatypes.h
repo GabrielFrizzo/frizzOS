@@ -10,6 +10,7 @@
 #include <ucontext.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/time.h>
 #include "queue.h"
@@ -69,10 +70,21 @@ typedef struct
   int count;
 } barrier_t ;
 
+// estrutura que define uma mensagem
+typedef struct message_t
+{
+    struct message_t *prev, *next;
+    void* content;
+    int size;
+} message_t;
+
 // estrutura que define uma fila de mensagens
 typedef struct
 {
-  // preencher quando necessário
+  semaphore_t *sem_msg, *sem_vaga, *sem_buffer;
+  message_t *msg_q;
+  int msg_size;
+  int destroyed;
 } mqueue_t ;
 
 // variáveis globais

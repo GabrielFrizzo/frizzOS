@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 
 include_directories(.)
 
+
 add_executable(frizzOS
         datatypes.h
         pingpong.c
@@ -12,5 +13,8 @@ add_executable(frizzOS
         queue.c
         queue.h
         pingpong-ipc.c
-        pingpong-barrier.c
+        pingpong-msg.c
+        pingpong-mqueue.c
         )
+
+target_link_libraries(frizzOS m) # enables math.h
