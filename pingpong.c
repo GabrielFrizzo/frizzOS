@@ -115,7 +115,7 @@ void _wake_tasks() {
 }
 
 void _dispatcher_exec(void *arg) {
-    while (queue_size((queue_t*)readyTasks) > 0 || queue_size((queue_t*)sleepingTasks) > 0 || queue_size((queue_t*)suspendedTasks) > 0) {
+    while (readyTasks != NULL || sleepingTasks != NULL || suspendedTasks != NULL) {
         if (systime() % WAKE_PERIOD == 0) _wake_tasks();
 
         task_t *nextTask = _scheduler();

@@ -14,7 +14,11 @@ add_executable(frizzOS
         queue.h
         pingpong-ipc.c
         pingpong-msg.c
-        pingpong-mqueue.c
-        )
+        diskdriver.h
+        harddisk.h
+        harddisk.c
+        pingpong-disco.c
+        diskdriver.c
+        disk0.dat)
 
-target_link_libraries(frizzOS m) # enables math.h
+target_link_libraries(frizzOS m rt)
