@@ -13,10 +13,64 @@ void _sigusr1_handler() {
     sem_up(&disk.sem_disk);
 }
 
+disk_request* _dsk_fcfs(disk_request *pRequest) {
+    return pRequest;
+}
+
+disk_request* _sstf(disk_request *pRequest) {
+    disk_request* iterator = pRequest, *best = iterator;
+    int min = 1<<30;
+    do {
+        int dist = abs(iterator->block - disk.currBlock);
+        if (dist < min) {
+            min = dist;
+            best = iterator;
+        }
+        iterator = iterator->next;
+    } while(iterator!= pRequest);
+
+    return best;
+}
+
+disk_request *_cscan(disk_request *pRequest) {
+    disk_request* iterator = pRequest, *best = NULL;
+    int foundNxt = 0;
+    int minDist = 1<<30, minBlk = minDist;
+    do {
+        int dist = iterator->block - disk.currBlock;
+        if (dist < minDist && dist >= 0) {
+            foundNxt = 1;
+            minDist = dist;
+            best = iterator;
+        } else if (!foundNxt && iterator->block < minBlk) { // keeps track of lowest position
+            minBlk = iterator->block;                       // in case there's none left ahead
+            best = iterator;
+        }
+        iterator = iterator->next;
+    } while(iterator!= pRequest);
+
+    return best;
+}
+
+disk_request *_disk_schedule() {
+    switch (DSK_SCHD_ALG) {
+        case FCFS:
+            return _dsk_fcfs(disk.req_q);
+        case SSTF:
+            return _sstf(disk.req_q);
+        case CSCAN:
+            return _cscan(disk.req_q);
+        default:
+            return _dsk_fcfs(disk.req_q);
+
+    }
+    return NULL;
+}
+
 void _disk_manager_execute(void* arg) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
-    while (1) {
+    while (mainTask.status != TERMINATED) {
         sem_down(&disk.sem_disk);
 
         if (disk.diskRDY) {
@@ -28,19 +82,22 @@ void _disk_manager_execute(void* arg) {
             disk.currReq = 0;
         }
 
-        if (disk_cmd(DISK_CMD_STATUS, 0, 0) == DISK_STATUS_IDLE &&
-            queue_size((queue_t*) disk.req_q) > 0)
-        {
+        if (disk_cmd(DISK_CMD_STATUS, 0, 0) == DISK_STATUS_IDLE && disk.req_q != NULL) {
 //            printf("D: curr req: %d\n", disk.req_q->task->tid);
-            disk.currReq = disk.req_q;
+            disk.currReq = _disk_schedule();
+            disk.totalBlkRun += abs(disk.currReq->block - disk.currBlock);
+            disk.currBlock = disk.currReq->block;
             disk_cmd(disk.currReq->op, disk.currReq->block, disk.currReq->buffer);
         }
 
         sem_up(&disk.sem_disk);
-        task_suspend(NULL, &suspendedTasks);
-        task_yield();
+//        task_suspend(NULL, &suspendedTasks);
+//        task_yield();
+        task_join(&mainTask);
     }
 #pragma clang diagnostic pop
+    printf("total block run: %d blocks\n", disk.totalBlkRun);
+    task_exit(0);
 }
 
 int diskdriver_init(int *numBlocks, int *blockSize) {
@@ -59,7 +116,9 @@ int diskdriver_init(int *numBlocks, int *blockSize) {
 
     //init harddisk
     disk.currReq = 0;
-    disk.diskRDY= 0;
+    disk.diskRDY = 0;
+    disk.currBlock = 0;
+    disk.totalBlkRun = 0;
     disk_cmd(DISK_CMD_INIT, 0, 0);
     *numBlocks = disk_cmd(DISK_CMD_DISKSIZE, 0, 0);
     *blockSize = disk_cmd(DISK_CMD_BLOCKSIZE, 0, 0);

@@ -18,7 +18,6 @@ add_executable(frizzOS
         harddisk.h
         harddisk.c
         pingpong-disco.c
-        diskdriver.c
-        disk0.dat)
+        diskdriver.c)
 
 target_link_libraries(frizzOS m rt)

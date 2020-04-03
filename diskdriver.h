@@ -10,6 +10,11 @@
 #include "harddisk.h"
 #include "pingpong.h"
 
+#define FCFS 0  // First come, first served // 7681 TBR
+#define SSTF 1  // Shortest Seek-Time First // 8919 TBR
+#define CSCAN 2 // Circular Scan // 11473 TBR
+#define DSK_SCHD_ALG SSTF
+
 // estrutura que representa um pedido de acesso ao disco
 typedef struct disk_request{
     struct disk_request *prev, *next;
@@ -27,6 +32,8 @@ typedef struct
   disk_request *req_q;      // queue of requests waiting to be occupy disk
   disk_request *currReq;    // request currently occupying disk
   int diskRDY;              // bool to indicate IO is ready
+  int currBlock;            // indicates disk reader current position
+  int totalBlkRun;           // performance indicator for disk scheduling algs
 } disk_t ;
 
 // inicializacao do driver de disco
