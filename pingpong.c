@@ -199,7 +199,7 @@ int task_create(task_t *task, void (*start_func)(void*), void *arg) {
     ucontext_t newContext;
     _create_context(&newContext);
 
-    makecontext(&newContext, start_func, 1, arg);
+    makecontext(&newContext, (void (*)(void)) start_func, 1, arg);
 
     _append_ready_task(task);
 
